@@ -69,15 +69,20 @@ Figures: `figs/chirp_trajectory.png` (V1), `figs/chirp_v2_trajectory.png` (V2).
   smooth monotone drift with wiggle from the β·sin(φ) term — the frequency is
   now an emergent state variable, exactly the property the Kuori atom forced
   on its instrument.
-- **[~] OPEN — the visualized V2 unit is silent.** The shipped trajectory
-  plots unit [0,0], whose amplitude sits at exactly 0 (output flat zero): for
-  that unit the learned `r_drive` is negative enough to kill the Stuart–Landau
-  fixed point. The chirp is confirmed in ω and φ, but a **population survey**
-  is needed: how many of the 64 units are live oscillators vs. dead ones, and
-  do the live ones chirp too? Instrument shipped: `inspect_population.py`.
-  (Echo of Nollas E2: frozen majority, mobile tail. If most units are dead
-  and a few do the work, that is the two-speed medium again — worth knowing
-  either way.)
+- **[V] RESOLVED — the population survey (`inspect_population.py`).** The
+  first V2 trajectory plot happened to sample unit [0,0], a silent oscillator
+  (amplitude 0), raising the frozen-majority worry from Nollas E2. The survey
+  answered it: **79.3% ± 7.2% of units are live**, and of those, **98.8% ±
+  0.9% chirp**, median |dω/step| = 0.133. This is *not* a two-speed medium —
+  no frozen majority, no mobile tail. The network solves MNIST with a ~50-note
+  chirping chord that self-modulates across the whole thinking window.
+  Figure: `figs/population_survey.png`.
+- **[~] Clamp saturation at long rollout.** In the 80-step survey, a visible
+  fraction of frequency trajectories hit the ±20 clamp by step ~40 and stick.
+  Within the trained 8-step window the dynamics are clamp-free, but the
+  long-horizon behaviour is partly clamp-shaped. The honest fix (as in V1→V2)
+  is stronger damping γ or a soft saturation (tanh) instead of a wall —
+  registered, not yet run.
 - **[~] OPEN — no evidence yet that chirping *helps*.** 98.95 vs 98.90 is
   noise. MNIST is too easy to need trajectories. The claim "reasoning over
   trajectories beats static vectors" is untested. Registered discriminator:
@@ -85,9 +90,22 @@ Figures: `figs/chirp_trajectory.png` (V1), `figs/chirp_v2_trajectory.png` (V2).
   speech commands), V2 vs. a parameter-matched GRU. Until that runs, the
   correct sentence is: *the chirping latent layer exists and trains; its
   advantage is a hypothesis.*
-- **[B] Trajectory attention.** Emit the whole internal trajectory
-  (steps × latent) and attend over it, letting the model choose *when* in
-  its own internal time to read each unit. Not built.
+- **[B → built, unrun] Resonance attention (`resonant_attention.py`).**
+  The trajectory readout, done the physics way rather than the transformer
+  way. Feeding the (steps × latent) matrix to standard attention would treat
+  a continuous oscillation as a string of tokens — an unrolled RNN. Instead:
+  the unit's complex trajectory Ψ(t) = r·e^{iφ} is correlated against
+  learnable **chirp templates** U(t) = e^{−i(νt + ½κt² + θ)}, one per
+  (class, unit); the logit is the weighted |∫ Ψ U* dt|. Off-frequency waves
+  destructively interfere to zero (dynamic ignoring, no learned mask);
+  energy transfers only on phase-lock. Attention = resonance — Kuramoto,
+  not softmax. Three arms, same trunk: **snapshot** (final value only, the
+  status quo), **blind** (time-mean amplitude — sees the trajectory, cannot
+  see phase), **resonant**. Registered: R1 resonant ≥ snapshot (KILL:
+  worse by >0.3% → the integral adds nothing over its endpoint); R2
+  resonant > blind by ≥0.3% (KILL/tie: amplitude explains everything,
+  interference is decorative *on MNIST* — verdict then ports to a temporal
+  task where phase has room to matter).
 
 ## What it is good for (today)
 
@@ -118,7 +136,8 @@ runnable question.
 chirp_v1_oscillator.py    V1: input-driven oscillator layer + MNIST harness
 chirp_v2_feedback.py      V2: self-modulating (chirping) layer + MNIST harness
 inspect_population.py     Survey: live vs. dead units, per-unit chirp rates
-figs/                     Trajectory plots from the two training runs
+resonant_attention.py     Chirp-matched-filter readout vs two matched controls
+figs/                     Trajectory plots + population survey
 ```
 
 Run: `pip install torch torchvision matplotlib`, then
