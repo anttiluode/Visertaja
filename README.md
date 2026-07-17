@@ -90,22 +90,36 @@ Figures: `figs/chirp_trajectory.png` (V1), `figs/chirp_v2_trajectory.png` (V2).
   speech commands), V2 vs. a parameter-matched GRU. Until that runs, the
   correct sentence is: *the chirping latent layer exists and trains; its
   advantage is a hypothesis.*
-- **[B → built, unrun] Resonance attention (`resonant_attention.py`).**
+- **[V]/[~] Resonance attention — RUN (`resonant_attention.py`).**
   The trajectory readout, done the physics way rather than the transformer
-  way. Feeding the (steps × latent) matrix to standard attention would treat
-  a continuous oscillation as a string of tokens — an unrolled RNN. Instead:
-  the unit's complex trajectory Ψ(t) = r·e^{iφ} is correlated against
+  way: the unit's complex trajectory Ψ(t) = r·e^{iφ} is correlated against
   learnable **chirp templates** U(t) = e^{−i(νt + ½κt² + θ)}, one per
   (class, unit); the logit is the weighted |∫ Ψ U* dt|. Off-frequency waves
-  destructively interfere to zero (dynamic ignoring, no learned mask);
-  energy transfers only on phase-lock. Attention = resonance — Kuramoto,
-  not softmax. Three arms, same trunk: **snapshot** (final value only, the
-  status quo), **blind** (time-mean amplitude — sees the trajectory, cannot
-  see phase), **resonant**. Registered: R1 resonant ≥ snapshot (KILL:
-  worse by >0.3% → the integral adds nothing over its endpoint); R2
-  resonant > blind by ≥0.3% (KILL/tie: amplitude explains everything,
-  interference is decorative *on MNIST* — verdict then ports to a temporal
-  task where phase has room to matter).
+  destructively interfere to zero — dynamic ignoring with no learned mask.
+  Three arms, same trunk (16-step window, 3 epochs, ~115k params each):
+
+  | arm | reads | test acc. |
+  |---|---|---|
+  | snapshot | final r·cos(φ) only | **98.81%** |
+  | blind | time-mean amplitude (phase-deaf) | **95.94%** |
+  | resonant | full complex trajectory vs chirp templates | **98.71%** |
+
+  **R2 [V] — phase is load-bearing.** Deafen the readout to phase and it
+  loses 2.8–2.9%: the class information genuinely lives in the wave's phase
+  structure, not just how loud each unit is. The resonant reader recovers
+  essentially all of it through interference alone.
+  **R1 [~] — integration ties the endpoint (−0.10%, noise).** On MNIST,
+  reading the whole glissando is exactly as good as reading its final note —
+  the registered prior, confirmed: static images give the trajectory nothing
+  extra to encode. The honest sentence: *resonance works as a readout
+  mechanism; MNIST cannot show whether it works better.*
+- **[B] The temporal discriminator (registered, next).** Feed input *over
+  time* — row-by-row sequential MNIST or speech commands — with the chirp
+  cell as the recurrent core (state carried between rows, new input drives
+  arriving each step), resonant readout over the whole episode, versus a
+  parameter-matched GRU. This is the first task where "representation =
+  trajectory" can beat "representation = vector" or die honestly. Prior:
+  undeclared — this one is a real coin-flip.
 
 ## What it is good for (today)
 
