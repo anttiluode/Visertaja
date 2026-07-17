@@ -115,13 +115,27 @@ Figures: `figs/chirp_trajectory.png` (V1), `figs/chirp_v2_trajectory.png` (V2).
   the registered prior, confirmed: static images give the trajectory nothing
   extra to encode. The honest sentence: *resonance works as a readout
   mechanism; MNIST cannot show whether it works better.*
-- **[B] The temporal discriminator (registered, next).** Feed input *over
-  time* — row-by-row sequential MNIST or speech commands — with the chirp
-  cell as the recurrent core (state carried between rows, new input drives
-  arriving each step), resonant readout over the whole episode, versus a
-  parameter-matched GRU. This is the first task where "representation =
-  trajectory" can beat "representation = vector" or die honestly. Prior:
-  undeclared — this one is a real coin-flip.
+- **[K] KILLED — the temporal discriminator ran, and the GRU won
+  (`temporal_discriminator.py`).** Row-sequential MNIST, open parameter
+  matching (chirp_resonant 23,050 params; GRU H=73, 23,297 — GRU never
+  fewer). Results: **GRU 97.34%, chirp_snapshot 93.51%, chirp_resonant
+  93.06%.** T1: chirp loses to the parameter-matched GRU by **4.28%**,
+  past the registered 1% kill line — the hypothesis "phase-stored history
+  beats gate-stored history" is dead at these conditions. T2 also killed:
+  the resonant readout *lost* to the snapshot by 0.45% even on a stream —
+  episode integration never earned its keep anywhere. The GeometricNeuron
+  precedent repeated exactly: a physics-shaped cell trains, works, and
+  loses to the boring gated baseline on the task that matters.
+  Caveats on the record, not as excuses: 3 epochs, and the chirp arms'
+  losses were still falling faster than the GRU's at cutoff (0.18–0.30 vs
+  0.08), so longer training might narrow the gap — but the verdict was
+  registered at these conditions and stands. The corpse is well-shaped:
+  the oscillator stores history in phase, and phase, trained by
+  backpropagation through 84 clamped Euler steps, is a *worse* memory
+  substrate than three learned gates. If someone wants to resurrect this,
+  the named suspects are the clamps (kill gradients at the walls), the
+  fixed dt, and the fact that nothing in the loss rewards keeping phase
+  coherent across rows.
 
 ## What it is good for (today)
 
@@ -153,6 +167,7 @@ chirp_v1_oscillator.py    V1: input-driven oscillator layer + MNIST harness
 chirp_v2_feedback.py      V2: self-modulating (chirping) layer + MNIST harness
 inspect_population.py     Survey: live vs. dead units, per-unit chirp rates
 resonant_attention.py     Chirp-matched-filter readout vs two matched controls
+temporal_discriminator.py Sequential-MNIST: chirp-RNN vs parameter-matched GRU
 figs/                     Trajectory plots + population survey
 ```
 
@@ -168,6 +183,11 @@ Claude as lab partners. The Ouroboros conversation that motivated it —
 fast information in, slow information out, the slow state gating the fast —
 lives in the Nollas discussion logs.
 
-*The atom defeated the microphone by refusing to hold a note. The obvious
-revenge was to build a network that never holds one either — and see if
-that is a feature.*
+*The atom defeated the microphone by refusing to hold a note. We built a
+network that never holds one either, and asked whether that was a feature.
+The instruments answered: the wave carries the information (phase is
+load-bearing), but on the one task where the trajectory could have beaten
+the vector, the boring gates won. The morgue takes the temporal hypothesis,
+with a well-shaped corpse and named suspects. The trophy case keeps the
+chirping choir, the resonant readout that works, and a comparison protocol
+honest enough that the loss means something.*
