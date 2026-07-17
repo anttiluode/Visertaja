@@ -1,6 +1,6 @@
 # Visertäjä — the Chirping Latent Layer
 
-![pic](\figs\population_survery.png)
+![pic](/figs/population_survery.png)
 
 *visertäjä (Finnish): chirper, songbird. A neural network layer whose latent
 units are self-modulating oscillators — representations that are trajectories,
